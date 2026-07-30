@@ -166,3 +166,28 @@ button {
     border-top: 1px solid var(--border-color);
     padding-top: 8px;
 }
+
+/* Empty Notes Message styling */
+#notesContainer p {
+    color: var(--text-color);
+    grid-column: 1 / -1;
+    font-style: italic;
+    opacity: 0.8;
+}
+
+/* Button styles inside note card footer */
+.edit-btn {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    margin-right: 6px;
+}
+
+.edit-btn:hover {
+    background-color: var(--primary-hover);
+}
+
+.note-footer button {
+    border-radius: 4px;
+}

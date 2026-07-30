@@ -1,13 +1,16 @@
 // State Variables
-let currentUser = null; // Stores logged-in user object { id, username }
+let currentUser = null; 
 let isRegisterMode = false;
+let editingNoteId = null; // Tracks note currently being edited
+let currentNotes = [];    // Stores loaded notes in memory
 
 // Initialize App
 document.addEventListener("DOMContentLoaded", () => {
     // Restore Dark Mode setting if saved previously
     if (localStorage.getItem("theme") === "dark") {
         document.body.classList.add("dark-mode");
-        document.getElementById("themeToggleBtn").innerText = "☀️ Light Mode";
+        const btn = document.getElementById("themeToggleBtn");
+        if (btn) btn.innerText = "\u2600\uFE0F Light Mode"; // ☀️ Light Mode
     }
 });
 
@@ -16,12 +19,16 @@ function toggleDarkMode() {
     document.body.classList.toggle("dark-mode");
     const isDark = document.body.classList.contains("dark-mode");
     localStorage.setItem("theme", isDark ? "dark" : "light");
-    document.getElementById("themeToggleBtn").innerText = isDark ? "☀️ Light Mode" : "🌙 Dark Mode";
+    
+    const btn = document.getElementById("themeToggleBtn");
+    if (btn) {
+        btn.innerText = isDark ? "\u2600\uFE0F Light Mode" : "\u{1F319} Dark Mode";
+    }
 }
 
 // 2. Toggle between Login & Register Forms
 function toggleAuthMode(event) {
-    event.preventDefault();
+    event?.preventDefault();
     isRegisterMode = !isRegisterMode;
 
     const title = document.getElementById("authTitle");
@@ -30,23 +37,23 @@ function toggleAuthMode(event) {
     const toggleLink = document.getElementById("authToggleLink");
 
     if (isRegisterMode) {
-        title.innerText = "Register New Account";
-        submitBtn.innerText = "Register";
-        toggleText.innerText = "Already have an account?";
-        toggleLink.innerText = "Login here";
+        if (title) title.innerText = "Register New Account";
+        if (submitBtn) submitBtn.innerText = "Register";
+        if (toggleText) toggleText.innerText = "Already have an account?";
+        if (toggleLink) toggleLink.innerText = "Login here";
     } else {
-        title.innerText = "Login to Your Notes";
-        submitBtn.innerText = "Login";
-        toggleText.innerText = "Don't have an account?";
-        toggleLink.innerText = "Register here";
+        if (title) title.innerText = "Login to Your Notes";
+        if (submitBtn) submitBtn.innerText = "Login";
+        if (toggleText) toggleText.innerText = "Don't have an account?";
+        if (toggleLink) toggleLink.innerText = "Register here";
     }
 }
 
-// 3. Handle Authentication Form Submission (Connects to C++ API)
+// 3. Handle Authentication Form Submission
 async function handleAuth(event) {
-    event.preventDefault();
-    const usernameInput = document.getElementById("username").value;
-    const passwordInput = document.getElementById("password").value;
+    event?.preventDefault();
+    const usernameInput = document.getElementById("username")?.value || "";
+    const passwordInput = document.getElementById("password")?.value || "";
 
     const endpoint = isRegisterMode ? "/api/register" : "/api/login";
 
@@ -60,7 +67,7 @@ async function handleAuth(event) {
         const data = await response.json();
 
         if (response.ok) {
-            currentUser = data.user;
+            currentUser = data.user || { id: data.id || 1, username: usernameInput };
             showAppView();
             loadNotes();
         } else {
@@ -68,7 +75,6 @@ async function handleAuth(event) {
         }
     } catch (error) {
         console.log("Server error or running in standalone mode.");
-        // Fallback demo user for frontend testing before C++ HTTP server is linked
         currentUser = { id: 1, username: usernameInput };
         showAppView();
         loadNotes();
@@ -84,6 +90,7 @@ function showAppView() {
 
 function logout() {
     currentUser = null;
+    editingNoteId = null;
     document.getElementById("authSection").style.display = "block";
     document.getElementById("appSection").style.display = "none";
     document.getElementById("logoutBtn").style.display = "none";
@@ -91,24 +98,30 @@ function logout() {
 
 // 5. Fetch Notes from C++ Backend
 async function loadNotes() {
+    if (!currentUser) return;
+
     try {
         const response = await fetch(`/api/notes?userId=${currentUser.id}`);
+        if (!response.ok) throw new Error("Failed to load notes");
+        
         const notes = await response.json();
-        renderNotes(notes);
+        currentNotes = Array.isArray(notes) ? notes : [];
+        renderNotes(currentNotes);
     } catch (error) {
-        console.log("Loading mock data for local testing...");
-        renderNotes([
-            { id: 1, title: "Welcome Note", content: "This is your first note in the C++ Notes App!", timestamp: "2026-03-31" }
-        ]);
+        console.log("Error loading notes...", error);
+        currentNotes = [];
+        renderNotes(currentNotes);
     }
 }
 
 // 6. Render Notes into HTML Grid
 function renderNotes(notes) {
     const container = document.getElementById("notesContainer");
+    if (!container) return;
+    
     container.innerHTML = "";
 
-    if (notes.length === 0) {
+    if (!Array.isArray(notes) || notes.length === 0) {
         container.innerHTML = "<p>No notes found. Create your first note above!</p>";
         return;
     }
@@ -122,50 +135,103 @@ function renderNotes(notes) {
                 <p>${escapeHTML(note.content)}</p>
             </div>
             <div class="note-footer">
-                <span>${note.timestamp}</span>
-                <button class="danger-btn" style="padding: 4px 8px; font-size: 0.8rem;" onclick="deleteNote(${note.id})">Delete</button>
+                <span>${escapeHTML(note.timestamp || "")}</span>
+                <div>
+                    <button class="edit-btn" onclick="startEditNote('${note.id}')">Edit</button>
+                    <button class="danger-btn" onclick="deleteNote('${note.id}')">Delete</button>
+                </div>
             </div>
         `;
         container.appendChild(card);
     });
 }
 
-// 7. Create New Note (Sends POST to C++)
+// 7. Start Editing Note Mode
+function startEditNote(noteId) {
+    const noteToEdit = currentNotes.find(n => String(n.id) === String(noteId));
+    if (!noteToEdit) return;
+
+    editingNoteId = noteId;
+    document.getElementById("noteTitle").value = noteToEdit.title;
+    document.getElementById("noteContent").value = noteToEdit.content;
+
+    // Change Submit Button text
+    const addBtn = document.querySelector("#appSection .primary-btn");
+    if (addBtn) addBtn.innerText = "💾 Save Changes";
+
+    // Scroll smoothly to form
+    document.getElementById("noteTitle").focus();
+}
+
+// Reset Form & Exit Edit Mode
+function resetNoteForm() {
+    editingNoteId = null;
+    document.getElementById("noteTitle").value = "";
+    document.getElementById("noteContent").value = "";
+
+    const addBtn = document.querySelector("#appSection .primary-btn");
+    if (addBtn) addBtn.innerText = "+ Add Note";
+}
+
+// 8. Create or Update Note (Sends POST or PUT to C++)
 async function handleCreateNote(event) {
-    event.preventDefault();
-    const title = document.getElementById("noteTitle").value;
-    const content = document.getElementById("noteContent").value;
+    event?.preventDefault();
+    if (!currentUser) return alert("You must be logged in.");
+
+    const title = document.getElementById("noteTitle")?.value || "";
+    const content = document.getElementById("noteContent")?.value || "";
     const timestamp = new Date().toISOString().split("T")[0];
 
+    if (!title.trim()) return alert("Title is required.");
+
     try {
-        await fetch("/api/notes", {
-            method: "POST",
+        const method = editingNoteId ? "PUT" : "POST";
+        const bodyPayload = editingNoteId 
+            ? { id: editingNoteId, userId: currentUser.id, title, content }
+            : { userId: currentUser.id, title, content, timestamp };
+
+        const response = await fetch("/api/notes", {
+            method: method,
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId: currentUser.id, title, content, timestamp })
+            body: JSON.stringify(bodyPayload)
         });
-        document.getElementById("noteTitle").value = "";
-        document.getElementById("noteContent").value = "";
-        loadNotes();
+
+        if (response.ok) {
+            resetNoteForm();
+            loadNotes();
+        } else {
+            const data = await response.json();
+            alert(data.error || "Failed to save note.");
+        }
     } catch (error) {
-        alert("Failed to connect to C++ backend server.");
+        alert("Failed to connect to backend server.");
     }
 }
 
-// 8. Delete Note (Sends DELETE to C++)
+// 9. Delete Note
 async function deleteNote(noteId) {
+    if (!currentUser) return;
     if (!confirm("Are you sure you want to delete this note?")) return;
 
     try {
-        await fetch(`/api/notes?id=${noteId}&userId=${currentUser.id}`, { method: "DELETE" });
+        await fetch(`/api/notes?id=${encodeURIComponent(noteId)}&userId=${currentUser.id}`, { method: "DELETE" });
+        
+        // If we deleted the note currently being edited, reset form
+        if (String(editingNoteId) === String(noteId)) {
+            resetNoteForm();
+        }
+        
         loadNotes();
     } catch (error) {
         alert("Failed to delete note.");
     }
 }
 
-// 9. Search Notes
+// 10. Search Notes
 async function handleSearch() {
-    const query = document.getElementById("searchInput").value;
+    if (!currentUser) return;
+
+    const query = document.getElementById("searchInput")?.value || "";
     if (!query.trim()) {
         loadNotes();
         return;
@@ -173,16 +239,19 @@ async function handleSearch() {
 
     try {
         const response = await fetch(`/api/notes/search?userId=${currentUser.id}&query=${encodeURIComponent(query)}`);
+        if (!response.ok) throw new Error("Search failed");
+
         const notes = await response.json();
-        renderNotes(notes);
+        currentNotes = Array.isArray(notes) ? notes : [];
+        renderNotes(currentNotes);
     } catch (error) {
-        console.log("Search error");
+        console.log("Search error", error);
     }
 }
 
 // Helper to prevent HTML Injection
 function escapeHTML(str) {
-    return str.replace(/[&<>'"]/g, 
+    return String(str || "").replace(/[&<>'"]/g, 
         tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
     );
 }

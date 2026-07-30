@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset=""UTF-8">
-    <meta name="viewport" content=""width=device-width, initial-scale="1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>C++ Notes App</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -10,10 +10,10 @@
 
     <!-- Top Navigation Header -->
     <header class="navbar">
-        <div class="logo">📝 C++ Notes App</div>
+        <div class="logo">&#128221; C++ Notes App</div>
         <div class="nav-controls">
             <input type="text" id="searchInput" placeholder="Search notes..." onkeyup="handleSearch()">
-            <button id="themeToggleBtn" onclick="toggleDarkMode()">🌙 Dark Mode</button>
+            <button id="themeToggleBtn" onclick="toggleDarkMode()">&#127771; Dark Mode</button>
             <button id="logoutBtn" class="danger-btn" onclick="logout()" style="display: none;">Logout</button>
         </div>
     </header>
@@ -50,7 +50,7 @@
                         <input type="text" id="noteTitle" required placeholder="Note Title...">
                     </div>
                     <div class="form-group">
-                        <textarea id=""noteContent" rows="4" required placeholder="Write your note content here..."></textarea>
+                        <textarea id="noteContent" rows="4" required placeholder="Write your note content here..."></textarea>
                     </div>
                     <button type="submit" class="primary-btn">+ Add Note</button>
                 </form>
@@ -58,11 +58,12 @@
 
             <!-- Notes Grid Container -->
             <h2>Your Notes</h2>
-            <div id="NotesContent" class="notes-grid">
+            <div id="notesContainer" class="notes-grid">
                 <!-- Dynamically populated by app.js -->
             </div>
         </section>
     </div>
+
     <script src="app.js"></script>
 </body>
 </html>
