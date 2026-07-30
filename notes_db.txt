@@ -1,0 +1,15 @@
+USERS 1
+1 Red hashed_pass_123
+NOTES 12
+1|1|C++ Basics|Learn Classes, objects, and memory.|2026-03-31 10:00
+2|1|Project Ideas|Build a Notes App using Crow & Web UI|2026-03-31 11:30
+3|1|C++ Basics|Learn Classes, objects, and memory.|2026-03-31 10:00
+4|1|Project Ideas|Build a Notes App using Crow & Web UI|2026-03-31 11:30
+5|1|C++ Basics|Learn Classes, objects, and memory.|2026-03-31 10:00
+6|1|Project Ideas|Build a Notes App using Crow & Web UI|2026-03-31 11:30
+7|1|C++ Basics|Learn Classes, objects, and memory.|2026-03-31 10:00
+8|1|Project Ideas|Build a Notes App using Crow & Web UI|2026-03-31 11:30
+9|1|C++ Basics|Learn Classes, objects, and memory.|2026-03-31 10:00
+10|1|Project Ideas|Build a Notes App using Crow & Web UI|2026-03-31 11:30
+11|1|C++ Basics|Learn Classes, objects, and memory.|2026-03-31 10:00
+12|1|Project Ideas|Build a Notes App using Crow & Web UI|2026-03-31 11:30

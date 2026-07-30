@@ -38,5 +38,10 @@ int main() {
         std::cout << note.toJSON() << std::endl;
     }
 
+    // --- PAUSE BEFORE EXITING ---
+    std::cout << "\n==========================================" << std::endl;
+    std::cout << "Press Enter to exit the application...";
+    std::cin.get(); //Keeps the window open until you press Enter!
+    
     return 0;
 }
