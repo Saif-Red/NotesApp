@@ -1,0 +1,6 @@
+# Ignore compiled executable binaries and build tools
+*.exe
+*.out
+*.o
+build/
+.vscode/
